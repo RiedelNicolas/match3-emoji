@@ -72,14 +72,14 @@ export class GameRenderer {
       </div>
     `;
 
-    document.getElementById('start-btn')!.addEventListener('click', () => {
-      const nameInput = document.getElementById('player-name') as HTMLInputElement;
+    this.app.querySelector('#start-btn')?.addEventListener('click', () => {
+      const nameInput = this.app.querySelector('#player-name') as HTMLInputElement;
       this.controller.setPlayerName(nameInput.value);
       this.controller.startGame();
     });
 
-    document.getElementById('player-name')!.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+    this.app.querySelector('#player-name')?.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Enter') {
         const nameInput = e.target as HTMLInputElement;
         this.controller.setPlayerName(nameInput.value);
         this.controller.startGame();
@@ -128,8 +128,8 @@ export class GameRenderer {
   }
 
   private updateHUD(state: GameState): void {
-    const timer = document.getElementById('timer-value');
-    const score = document.getElementById('score-value');
+    const timer = this.app.querySelector('#timer-value');
+    const score = this.app.querySelector('#score-value');
     if (timer) {
       timer.textContent = String(state.timeLeft);
       timer.className = 'hud-value' + (state.timeLeft <= 10 ? ' hud-urgent' : '');
@@ -138,7 +138,7 @@ export class GameRenderer {
   }
 
   private updateGrid(state: GameState): void {
-    const container = document.getElementById('grid-container');
+    const container = this.app.querySelector('#grid-container');
     if (!container) return;
     container.innerHTML = this.buildGridHtml(state);
     this.attachGridListeners();
@@ -166,7 +166,7 @@ export class GameRenderer {
 
   private showGameOver(): void {
     const state = this.controller.getState();
-    const container = document.querySelector('.game-screen');
+    const container = this.app.querySelector('.game-screen');
     if (!container) return;
 
     // Remove existing modal if any
@@ -197,7 +197,7 @@ export class GameRenderer {
   // ─── Input Handling ──────────────────────────────────────────────────────────
 
   private attachGridListeners(): void {
-    const grid = document.querySelector('.grid');
+    const grid = this.app.querySelector('.grid');
     if (!grid) return;
 
     // Desktop: click-to-click and drag-and-drop

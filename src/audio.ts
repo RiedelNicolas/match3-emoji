@@ -1,17 +1,23 @@
 // Procedural 8-bit audio engine using Web Audio API
 
+const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
 let audioContext: AudioContext | null = null;
 
-function getCtx(): AudioContext {
+function getCtx(): AudioContext | null {
+  if (!AudioCtx) return null;
   if (!audioContext) {
-    audioContext = new AudioContext();
+    try {
+      audioContext = new AudioCtx();
+    } catch {
+      return null;
+    }
   }
   return audioContext;
 }
 
 export function resumeAudio(): void {
   const ctx = getCtx();
-  if (ctx.state === 'suspended') {
+  if (ctx && ctx.state === 'suspended') {
     ctx.resume();
   }
 }
@@ -24,6 +30,7 @@ function playTone(
   startTime: number,
 ): void {
   const ctx = getCtx();
+  if (!ctx) return;
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
 
@@ -46,6 +53,7 @@ function playTone(
 // Short high-pitched beep for swap
 export function playSwapSound(): void {
   const ctx = getCtx();
+  if (!ctx) return;
   const now = ctx.currentTime;
   playTone(880, 0.08, 'square', 0.15, now);
 }
@@ -53,6 +61,7 @@ export function playSwapSound(): void {
 // Error sound — low dry note
 export function playErrorSound(): void {
   const ctx = getCtx();
+  if (!ctx) return;
   const now = ctx.currentTime;
   playTone(150, 0.15, 'sawtooth', 0.2, now);
 }
@@ -60,6 +69,7 @@ export function playErrorSound(): void {
 // Match sound — ascending arpeggio, faster if comboLevel > 0
 export function playMatchSound(comboLevel: number = 0): void {
   const ctx = getCtx();
+  if (!ctx) return;
   const now = ctx.currentTime;
   const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
   const noteDuration = 0.07;
@@ -74,6 +84,7 @@ export function playMatchSound(comboLevel: number = 0): void {
 // Game over — descending sequence
 export function playGameOverSound(): void {
   const ctx = getCtx();
+  if (!ctx) return;
   const now = ctx.currentTime;
   const notes = [523, 440, 349, 262]; // C5, A4, F4, C4
   for (let i = 0; i < notes.length; i++) {
@@ -84,6 +95,7 @@ export function playGameOverSound(): void {
 // Reshuffle — ascending/descending sweep
 export function playReshuffleSound(): void {
   const ctx = getCtx();
+  if (!ctx) return;
   const now = ctx.currentTime;
   const notes = [392, 440, 494, 523, 494, 440, 392];
   for (let i = 0; i < notes.length; i++) {

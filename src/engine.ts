@@ -20,7 +20,11 @@ function randomEmoji(): GameEmoji {
 }
 
 function generateId(): string {
-  return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Simple fallback for older browsers
+  return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 }
 
 function createCell(x: number, y: number, emoji: GameEmoji): Cell {
