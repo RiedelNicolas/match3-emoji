@@ -287,11 +287,14 @@ export class GameRenderer {
         direction &&
         ((Math.abs(dx) === 1 && dy === 0) || (dx === 0 && Math.abs(dy) === 1))
       ) {
-        this.controller.applyMove(
-          this.selectedCell.x,
-          this.selectedCell.y,
-          direction,
-        );
+        const sx = this.selectedCell.x;
+        const sy = this.selectedCell.y;
+        this.controller.applyMove(sx, sy, direction).then((ok) => {
+          if (!ok) {
+            this.shakeCell(sx, sy);
+            this.shakeCell(x, y);
+          }
+        });
       } else if (x === this.selectedCell.x && y === this.selectedCell.y) {
         // Deselect same cell
       } else {
@@ -327,7 +330,12 @@ export class GameRenderer {
       direction &&
       ((Math.abs(dx) === 1 && dy === 0) || (dx === 0 && Math.abs(dy) === 1))
     ) {
-      this.controller.applyMove(fromX, fromY, direction);
+      this.controller.applyMove(fromX, fromY, direction).then((ok) => {
+        if (!ok) {
+          this.shakeCell(fromX, fromY);
+          if (toCoords) this.shakeCell(toCoords.x, toCoords.y);
+        }
+      });
     }
     this.selectedCell = null;
     this.inputMode = "idle";
@@ -355,12 +363,24 @@ export class GameRenderer {
 
     const direction = this.getDirectionFromDelta(dx, dy);
     if (direction && this.touchStartCellX >= 0 && this.touchStartCellY >= 0) {
-      this.controller.applyMove(
-        this.touchStartCellX,
-        this.touchStartCellY,
-        direction,
-      );
+      const cx = this.touchStartCellX;
+      const cy = this.touchStartCellY;
+      const nx = cx + (direction === "RIGHT" ? 1 : direction === "LEFT" ? -1 : 0);
+      const ny = cy + (direction === "DOWN" ? 1 : direction === "UP" ? -1 : 0);
+      this.controller.applyMove(cx, cy, direction).then((ok) => {
+        if (!ok) {
+          this.shakeCell(cx, cy);
+          this.shakeCell(nx, ny);
+        }
+      });
     }
+  }
+
+  private shakeCell(x: number, y: number): void {
+    const cell = this.app.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`) as HTMLElement | null;
+    if (!cell) return;
+    cell.classList.add("cell-error");
+    cell.addEventListener("animationend", () => cell.classList.remove("cell-error"), { once: true });
   }
 
   private getDirectionFromDelta(dx: number, dy: number): MoveDirection | null {

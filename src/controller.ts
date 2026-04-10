@@ -105,26 +105,26 @@ export class GameController {
     this.emit('gameOver');
   }
 
-  async applyMove(fromX: number, fromY: number, direction: MoveDirection): Promise<void> {
-    if (this.state.status !== 'playing') return;
+  async applyMove(fromX: number, fromY: number, direction: MoveDirection): Promise<boolean> {
+    if (this.state.status !== 'playing') return false;
 
     const neighbor = getNeighborCoords(fromX, fromY, direction);
     if (!neighbor) {
       playErrorSound();
-      return;
+      return false;
     }
     const { nx, ny } = neighbor;
 
     // Check bounds
     if (fromX < 0 || fromX >= GRID_COLS || fromY < 0 || fromY >= GRID_ROWS) {
       playErrorSound();
-      return;
+      return false;
     }
 
     const grid = cloneGrid(this.state.grid);
     if (!isValidMove(grid, fromX, fromY, direction)) {
       playErrorSound();
-      return;
+      return false;
     }
 
     playSwapSound();
@@ -138,6 +138,7 @@ export class GameController {
 
     // Process cascades
     await this.processCascade(0);
+    return true;
   }
 
   private delay(ms: number): Promise<void> {

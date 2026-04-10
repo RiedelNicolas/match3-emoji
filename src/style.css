@@ -292,6 +292,21 @@ html, body {
   cursor: default;
 }
 
+.cell-error {
+  animation: shake 0.4s ease-in-out;
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(5px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+}
+
 /* ─── Game Over Modal ───────────────────────────────────────────────────── */
 .game-over-modal {
   position: absolute;
