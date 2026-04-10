@@ -20,6 +20,15 @@ export class GameRenderer {
     this.app = app;
     this.controller = controller;
 
+    // Add hidden haptic engine for iOS compatibility
+    const hapticContainer = document.createElement('div');
+    hapticContainer.style.display = 'none';
+    hapticContainer.innerHTML = `
+      <input type="checkbox" switch id="haptic-switch" style="display:none">
+      <label for="haptic-switch" id="haptic-label"></label>
+    `;
+    this.app.appendChild(hapticContainer);
+
     this.controller.on('stateChange', () => this.render());
     this.controller.on('gameOver', () => this.showGameOver());
 

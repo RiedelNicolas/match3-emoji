@@ -181,9 +181,7 @@ export class GameController {
     }
 
     // Haptic feedback
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50);
-    }
+    this.triggerVibrate();
 
     this.emit('stateChange');
     await this.delay(200);
@@ -201,5 +199,18 @@ export class GameController {
 
   isHighScore(): boolean {
     return isNewHighScore(this.state.score);
+  }
+
+  private triggerVibrate(): void {
+    // Standard vibration (Android/Chrome)
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+
+    // iOS 18+ Workaround: click hidden label associated with a 'switch' input
+    const hapticLabel = document.getElementById('haptic-label');
+    if (hapticLabel) {
+      hapticLabel.click();
+    }
   }
 }
