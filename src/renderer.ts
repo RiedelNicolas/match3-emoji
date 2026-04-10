@@ -1,15 +1,15 @@
-import { Cell, GameState, GRID_COLS, GRID_ROWS, MoveDirection } from './types';
-import { GameController } from './controller';
-import { loadLeaderboard } from './score';
+import { Cell, GameState, GRID_COLS, GRID_ROWS, MoveDirection } from "./types";
+import { GameController } from "./controller";
+import { loadLeaderboard } from "./score";
 
-type InputMode = 'idle' | 'selected';
+type InputMode = "idle" | "selected";
 
 export class GameRenderer {
   private app: HTMLElement;
   private controller: GameController;
 
   // Input state
-  private inputMode: InputMode = 'idle';
+  private inputMode: InputMode = "idle";
   private selectedCell: { x: number; y: number } | null = null;
   private touchStartX: number = 0;
   private touchStartY: number = 0;
@@ -21,16 +21,16 @@ export class GameRenderer {
     this.controller = controller;
 
     // Add hidden haptic engine for iOS compatibility
-    const hapticContainer = document.createElement('div');
-    hapticContainer.style.display = 'none';
+    const hapticContainer = document.createElement("div");
+    hapticContainer.style.display = "none";
     hapticContainer.innerHTML = `
       <input type="checkbox" switch id="haptic-switch" style="display:none">
       <label for="haptic-switch" id="haptic-label"></label>
     `;
     this.app.appendChild(hapticContainer);
 
-    this.controller.on('stateChange', () => this.render());
-    this.controller.on('gameOver', () => this.showGameOver());
+    this.controller.on("stateChange", () => this.render());
+    this.controller.on("gameOver", () => this.showGameOver());
 
     this.renderHome();
   }
@@ -39,19 +39,24 @@ export class GameRenderer {
 
   private renderHome(): void {
     const entries = loadLeaderboard();
-    const leaderboardHtml = entries.length === 0
-      ? '<p class="no-scores">¡Sé el primero en jugar!</p>'
-      : `<table class="leaderboard-table">
+    const leaderboardHtml =
+      entries.length === 0
+        ? '<p class="no-scores">¡Sé el primero en jugar!</p>'
+        : `<table class="leaderboard-table">
           <thead><tr><th>#</th><th>Jugador</th><th>Puntaje</th><th>Fecha</th></tr></thead>
           <tbody>
-            ${entries.map((e, i) => `
+            ${entries
+              .map(
+                (e, i) => `
               <tr>
                 <td>${i + 1}</td>
                 <td>${escapeHtml(e.name)}</td>
                 <td>${e.score.toLocaleString()}</td>
                 <td>${e.date}</td>
               </tr>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </tbody>
         </table>`;
 
@@ -75,24 +80,46 @@ export class GameRenderer {
               maxlength="20"
               autocomplete="off"
             />
+            <p id="name-error" class="error-message" style="display: none; color: red; font-size: 0.9rem;">Por favor, ingresa tu nombre para continuar.</p>
             <button id="start-btn" class="btn btn-primary">▶ Iniciar Partida</button>
           </div>
         </div>
       </div>
     `;
 
-    this.app.querySelector('#start-btn')?.addEventListener('click', () => {
-      const nameInput = this.app.querySelector('#player-name') as HTMLInputElement;
-      this.controller.setPlayerName(nameInput.value);
+    this.app.querySelector("#start-btn")?.addEventListener("click", () => {
+      const nameInput = this.app.querySelector(
+        "#player-name",
+      ) as HTMLInputElement;
+      const errorMsg = this.app.querySelector("#name-error") as HTMLElement;
+      if (nameInput.value.trim() === "") {
+        errorMsg.style.display = "block";
+        nameInput.focus();
+        return;
+      }
+      errorMsg.style.display = "none";
+      this.controller.setPlayerName(nameInput.value.trim());
       this.controller.startGame();
     });
 
-    this.app.querySelector('#player-name')?.addEventListener('keydown', (e) => {
-      if ((e as KeyboardEvent).key === 'Enter') {
+    this.app.querySelector("#player-name")?.addEventListener("keydown", (e) => {
+      if ((e as KeyboardEvent).key === "Enter") {
         const nameInput = e.target as HTMLInputElement;
-        this.controller.setPlayerName(nameInput.value);
+        const errorMsg = this.app.querySelector("#name-error") as HTMLElement;
+        if (nameInput.value.trim() === "") {
+          errorMsg.style.display = "block";
+          nameInput.focus();
+          return;
+        }
+        errorMsg.style.display = "none";
+        this.controller.setPlayerName(nameInput.value.trim());
         this.controller.startGame();
       }
+    });
+
+    this.app.querySelector("#player-name")?.addEventListener("input", () => {
+      const errorMsg = this.app.querySelector("#name-error") as HTMLElement;
+      errorMsg.style.display = "none";
     });
   }
 
@@ -100,12 +127,12 @@ export class GameRenderer {
 
   private render(): void {
     const state = this.controller.getState();
-    if (state.status === 'idle') {
+    if (state.status === "idle") {
       this.renderHome();
       return;
     }
 
-    const existing = this.app.querySelector('.game-screen');
+    const existing = this.app.querySelector(".game-screen");
     if (!existing) {
       this.renderGameScreen(state);
     } else {
@@ -130,63 +157,65 @@ export class GameRenderer {
         <div id="grid-container" class="grid-container">
           ${this.buildGridHtml(state)}
         </div>
-        ${state.status === 'game_over' ? this.buildGameOverModal(state) : ''}
+        ${state.status === "game_over" ? this.buildGameOverModal(state) : ""}
       </div>
     `;
     this.attachGridListeners();
   }
 
   private updateHUD(state: GameState): void {
-    const timer = this.app.querySelector('#timer-value');
-    const score = this.app.querySelector('#score-value');
+    const timer = this.app.querySelector("#timer-value");
+    const score = this.app.querySelector("#score-value");
     if (timer) {
       timer.textContent = String(state.timeLeft);
-      timer.className = 'hud-value' + (state.timeLeft <= 10 ? ' hud-urgent' : '');
+      timer.className =
+        "hud-value" + (state.timeLeft <= 10 ? " hud-urgent" : "");
     }
     if (score) score.textContent = state.score.toLocaleString();
   }
 
   private updateGrid(state: GameState): void {
-    const container = this.app.querySelector('#grid-container');
+    const container = this.app.querySelector("#grid-container");
     if (!container) return;
     container.innerHTML = this.buildGridHtml(state);
     this.attachGridListeners();
   }
 
   private buildGridHtml(state: GameState): string {
-    const animating = state.status === 'animating';
-    let html = `<div class="grid${animating ? ' grid-animating' : ''}" style="--cols:${GRID_COLS};--rows:${GRID_ROWS};">`;
+    const animating = state.status === "animating";
+    let html = `<div class="grid${animating ? " grid-animating" : ""}" style="--cols:${GRID_COLS};--rows:${GRID_ROWS};">`;
     for (let y = 0; y < GRID_ROWS; y++) {
       for (let x = 0; x < GRID_COLS; x++) {
         const cell: Cell = state.grid[y][x];
-        const isSelected = this.selectedCell?.x === x && this.selectedCell?.y === y;
+        const isSelected =
+          this.selectedCell?.x === x && this.selectedCell?.y === y;
         html += `<div
-          class="cell${isSelected ? ' cell-selected' : ''}${cell.emoji === null ? ' cell-empty' : ''}"
+          class="cell${isSelected ? " cell-selected" : ""}${cell.emoji === null ? " cell-empty" : ""}"
           data-x="${x}"
           data-y="${y}"
           data-id="${cell.id}"
-          draggable="${cell.emoji !== null ? 'true' : 'false'}"
-        >${cell.emoji ?? ''}</div>`;
+          draggable="${cell.emoji !== null ? "true" : "false"}"
+        >${cell.emoji ?? ""}</div>`;
       }
     }
-    html += '</div>';
+    html += "</div>";
     return html;
   }
 
   private showGameOver(): void {
     const state = this.controller.getState();
-    const container = this.app.querySelector('.game-screen');
+    const container = this.app.querySelector(".game-screen");
     if (!container) return;
 
     // Remove existing modal if any
-    container.querySelector('.game-over-modal')?.remove();
+    container.querySelector(".game-over-modal")?.remove();
 
-    const modal = document.createElement('div');
-    modal.className = 'game-over-modal';
+    const modal = document.createElement("div");
+    modal.className = "game-over-modal";
     modal.innerHTML = this.buildGameOverModal(state);
     container.appendChild(modal);
 
-    modal.querySelector('#play-again-btn')?.addEventListener('click', () => {
+    modal.querySelector("#play-again-btn")?.addEventListener("click", () => {
       this.renderHome();
     });
   }
@@ -197,7 +226,7 @@ export class GameRenderer {
       <div class="game-over-modal">
         <h2>⏰ ¡Fin del juego!</h2>
         <p class="final-score">Puntaje: <strong>${state.score.toLocaleString()}</strong></p>
-        ${isHigh ? '<p class="high-score-msg">🏆 ¡Nuevo récord!</p>' : ''}
+        ${isHigh ? '<p class="high-score-msg">🏆 ¡Nuevo récord!</p>' : ""}
         <button id="play-again-btn" class="btn btn-primary">↩ Volver a jugar</button>
       </div>
     `;
@@ -206,46 +235,63 @@ export class GameRenderer {
   // ─── Input Handling ──────────────────────────────────────────────────────────
 
   private attachGridListeners(): void {
-    const grid = this.app.querySelector('.grid');
+    const grid = this.app.querySelector(".grid");
     if (!grid) return;
 
     // Desktop: click-to-click and drag-and-drop
-    grid.addEventListener('click', (e) => this.handleClick(e as MouseEvent));
-    grid.addEventListener('dragstart', (e) => this.handleDragStart(e as DragEvent));
-    grid.addEventListener('dragover', (e) => e.preventDefault());
-    grid.addEventListener('drop', (e) => this.handleDrop(e as DragEvent));
+    grid.addEventListener("click", (e) => this.handleClick(e as MouseEvent));
+    grid.addEventListener("dragstart", (e) =>
+      this.handleDragStart(e as DragEvent),
+    );
+    grid.addEventListener("dragover", (e) => e.preventDefault());
+    grid.addEventListener("drop", (e) => this.handleDrop(e as DragEvent));
 
     // Mobile: touch swipe
-    grid.addEventListener('touchstart', (e) => this.handleTouchStart(e as TouchEvent), { passive: true });
-    grid.addEventListener('touchend', (e) => this.handleTouchEnd(e as TouchEvent), { passive: true });
+    grid.addEventListener(
+      "touchstart",
+      (e) => this.handleTouchStart(e as TouchEvent),
+      { passive: true },
+    );
+    grid.addEventListener(
+      "touchend",
+      (e) => this.handleTouchEnd(e as TouchEvent),
+      { passive: true },
+    );
   }
 
   private getCellCoords(target: Element): { x: number; y: number } | null {
-    const cell = target.closest('[data-x]');
+    const cell = target.closest("[data-x]");
     if (!cell) return null;
-    const x = parseInt((cell as HTMLElement).dataset['x'] ?? '-1');
-    const y = parseInt((cell as HTMLElement).dataset['y'] ?? '-1');
+    const x = parseInt((cell as HTMLElement).dataset["x"] ?? "-1");
+    const y = parseInt((cell as HTMLElement).dataset["y"] ?? "-1");
     if (x < 0 || y < 0) return null;
     return { x, y };
   }
 
   private handleClick(e: MouseEvent): void {
-    if (this.controller.getState().status !== 'playing') return;
+    if (this.controller.getState().status !== "playing") return;
     const coords = this.getCellCoords(e.target as Element);
     if (!coords) return;
     const { x, y } = coords;
 
-    if (this.inputMode === 'idle') {
+    if (this.inputMode === "idle") {
       this.selectedCell = { x, y };
-      this.inputMode = 'selected';
+      this.inputMode = "selected";
       this.updateGrid(this.controller.getState());
-    } else if (this.inputMode === 'selected' && this.selectedCell) {
+    } else if (this.inputMode === "selected" && this.selectedCell) {
       const dx = x - this.selectedCell.x;
       const dy = y - this.selectedCell.y;
       const direction = this.getDirectionFromDelta(dx, dy);
 
-      if (direction && (Math.abs(dx) === 1 && dy === 0 || dx === 0 && Math.abs(dy) === 1)) {
-        this.controller.applyMove(this.selectedCell.x, this.selectedCell.y, direction);
+      if (
+        direction &&
+        ((Math.abs(dx) === 1 && dy === 0) || (dx === 0 && Math.abs(dy) === 1))
+      ) {
+        this.controller.applyMove(
+          this.selectedCell.x,
+          this.selectedCell.y,
+          direction,
+        );
       } else if (x === this.selectedCell.x && y === this.selectedCell.y) {
         // Deselect same cell
       } else {
@@ -255,7 +301,7 @@ export class GameRenderer {
         return;
       }
       this.selectedCell = null;
-      this.inputMode = 'idle';
+      this.inputMode = "idle";
     }
   }
 
@@ -263,25 +309,28 @@ export class GameRenderer {
     const coords = this.getCellCoords(e.target as Element);
     if (!coords) return;
     this.selectedCell = coords;
-    e.dataTransfer?.setData('text/plain', `${coords.x},${coords.y}`);
+    e.dataTransfer?.setData("text/plain", `${coords.x},${coords.y}`);
   }
 
   private handleDrop(e: DragEvent): void {
     e.preventDefault();
-    if (this.controller.getState().status !== 'playing') return;
-    const data = e.dataTransfer?.getData('text/plain');
+    if (this.controller.getState().status !== "playing") return;
+    const data = e.dataTransfer?.getData("text/plain");
     if (!data) return;
-    const [fromX, fromY] = data.split(',').map(Number);
+    const [fromX, fromY] = data.split(",").map(Number);
     const toCoords = this.getCellCoords(e.target as Element);
     if (!toCoords) return;
     const dx = toCoords.x - fromX;
     const dy = toCoords.y - fromY;
     const direction = this.getDirectionFromDelta(dx, dy);
-    if (direction && (Math.abs(dx) === 1 && dy === 0 || dx === 0 && Math.abs(dy) === 1)) {
+    if (
+      direction &&
+      ((Math.abs(dx) === 1 && dy === 0) || (dx === 0 && Math.abs(dy) === 1))
+    ) {
       this.controller.applyMove(fromX, fromY, direction);
     }
     this.selectedCell = null;
-    this.inputMode = 'idle';
+    this.inputMode = "idle";
   }
 
   private handleTouchStart(e: TouchEvent): void {
@@ -296,7 +345,7 @@ export class GameRenderer {
   }
 
   private handleTouchEnd(e: TouchEvent): void {
-    if (this.controller.getState().status !== 'playing') return;
+    if (this.controller.getState().status !== "playing") return;
     const touch = e.changedTouches[0];
     const dx = touch.clientX - this.touchStartX;
     const dy = touch.clientY - this.touchStartY;
@@ -306,15 +355,19 @@ export class GameRenderer {
 
     const direction = this.getDirectionFromDelta(dx, dy);
     if (direction && this.touchStartCellX >= 0 && this.touchStartCellY >= 0) {
-      this.controller.applyMove(this.touchStartCellX, this.touchStartCellY, direction);
+      this.controller.applyMove(
+        this.touchStartCellX,
+        this.touchStartCellY,
+        direction,
+      );
     }
   }
 
   private getDirectionFromDelta(dx: number, dy: number): MoveDirection | null {
     if (Math.abs(dx) > Math.abs(dy)) {
-      return dx > 0 ? 'RIGHT' : 'LEFT';
+      return dx > 0 ? "RIGHT" : "LEFT";
     } else if (Math.abs(dy) > Math.abs(dx)) {
-      return dy > 0 ? 'DOWN' : 'UP';
+      return dy > 0 ? "DOWN" : "UP";
     }
     return null;
   }
@@ -322,9 +375,9 @@ export class GameRenderer {
 
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
