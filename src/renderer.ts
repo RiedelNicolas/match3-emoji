@@ -3,6 +3,7 @@ import { GameController } from "./controller";
 import { loadLeaderboard } from "./score";
 
 type InputMode = "idle" | "selected";
+const COMBO_INDICATOR_DURATION_MS = 800;
 
 export class GameRenderer {
   private app: HTMLElement;
@@ -241,7 +242,7 @@ export class GameRenderer {
     this.comboIndicatorTimeout = setTimeout(() => {
       indicator.classList.remove("combo-indicator-show");
       this.comboIndicatorTimeout = null;
-    }, 800);
+    }, COMBO_INDICATOR_DURATION_MS);
   }
 
   private buildGameOverModal(state: GameState): string {
