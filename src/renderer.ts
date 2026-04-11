@@ -7,6 +7,7 @@ type InputMode = "idle" | "selected";
 export class GameRenderer {
   private app: HTMLElement;
   private controller: GameController;
+  private comboIndicatorTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Input state
   private inputMode: InputMode = "idle";
@@ -31,6 +32,8 @@ export class GameRenderer {
 
     this.controller.on("stateChange", () => this.render());
     this.controller.on("gameOver", () => this.showGameOver());
+    this.controller.on("matchFound", () => this.showComboIndicator());
+    this.controller.on("comboFound", () => this.showComboIndicator());
 
     this.renderHome();
   }
@@ -154,6 +157,7 @@ export class GameRenderer {
             <span id="score-value" class="hud-value">${state.score.toLocaleString()}</span>
           </div>
         </div>
+        <div id="combo-indicator" class="combo-indicator" aria-live="polite"></div>
         <div id="grid-container" class="grid-container">
           ${this.buildGridHtml(state)}
         </div>
@@ -218,6 +222,26 @@ export class GameRenderer {
     modal.querySelector("#play-again-btn")?.addEventListener("click", () => {
       this.renderHome();
     });
+  }
+
+  private showComboIndicator(): void {
+    const state = this.controller.getState();
+    if (state.lastMatchSize <= 3) return;
+    const indicator = this.app.querySelector("#combo-indicator") as HTMLElement | null;
+    if (!indicator) return;
+
+    indicator.textContent = `🔥 ¡COMBO x${state.lastMatchSize}!`;
+    indicator.classList.remove("combo-indicator-show");
+    void indicator.offsetWidth;
+    indicator.classList.add("combo-indicator-show");
+
+    if (this.comboIndicatorTimeout !== null) {
+      clearTimeout(this.comboIndicatorTimeout);
+    }
+    this.comboIndicatorTimeout = setTimeout(() => {
+      indicator.classList.remove("combo-indicator-show");
+      this.comboIndicatorTimeout = null;
+    }, 800);
   }
 
   private buildGameOverModal(state: GameState): string {

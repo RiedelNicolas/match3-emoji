@@ -272,6 +272,7 @@ export function createInitialState(): GameState {
     score: 0,
     timeLeft: INITIAL_TIME,
     status: 'idle',
+    lastMatchSize: 0,
   };
 }
 

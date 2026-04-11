@@ -154,11 +154,11 @@ export class GameController {
       if (!hasValidMove(grid)) {
         playReshuffleSound();
         reshuffleGrid(grid);
-        this.state = { ...this.state, grid, status: 'playing' };
+        this.state = { ...this.state, grid, status: 'playing', lastMatchSize: 0 };
         this.emit('stateChange');
         this.emit('reshuffled');
       } else {
-        this.state = { ...this.state, grid, status: 'playing' };
+        this.state = { ...this.state, grid, status: 'playing', lastMatchSize: 0 };
         this.emit('stateChange');
       }
       return;
@@ -171,6 +171,7 @@ export class GameController {
       ...this.state,
       grid,
       score: this.state.score + score,
+      lastMatchSize: matches.size,
     };
 
     if (comboLevel === 0) {

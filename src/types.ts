@@ -16,6 +16,7 @@ export interface GameState {
   score: number;
   timeLeft: number;
   status: 'idle' | 'playing' | 'animating' | 'game_over';
+  lastMatchSize: number;
 }
 
 export interface PlayerMove {

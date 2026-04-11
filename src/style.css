@@ -192,6 +192,33 @@ html, body {
   padding: 8px;
 }
 
+.combo-indicator {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  opacity: 0;
+  pointer-events: none;
+  background: rgba(245, 158, 11, 0.95);
+  color: #1e1235;
+  font-weight: 900;
+  font-size: clamp(0.9rem, 2.8vw, 1.2rem);
+  padding: 8px 14px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+}
+
+.combo-indicator-show {
+  animation: comboPop 0.8s ease-out forwards;
+}
+
+@keyframes comboPop {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.92); }
+  20% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.04); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-16px) scale(1); }
+}
+
 /* HUD */
 .hud {
   display: flex;
